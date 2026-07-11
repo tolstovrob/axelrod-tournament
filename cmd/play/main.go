@@ -9,7 +9,7 @@ import (
 
 func main() {
 	config := internal.Config{
-		Rounds:       20000,
+		Rounds:       200,
 		PayoffMatrix: internal.DefaultPayoffMatrix(),
 	}
 
@@ -38,6 +38,7 @@ func main() {
 	tm.AddStrategy(strategies.AdaptiveStrategy{Threshold: 0.7})
 	tm.AddStrategy(&strategies.Kamikaze{BetrayalStart: 160})
 	tm.AddStrategy(&strategies.Kamikaze{BetrayalStart: 120})
+	tm.AddStrategy(&strategies.TwoTitsForTat{})
 	// -------------------------
 
 	tm.PlayTournament()
