@@ -36,6 +36,8 @@ func main() {
 	tm.AddStrategy(strategies.AdaptiveStrategy{Threshold: 0.3})
 	tm.AddStrategy(strategies.AdaptiveStrategy{Threshold: 0.5})
 	tm.AddStrategy(strategies.AdaptiveStrategy{Threshold: 0.7})
+	tm.AddStrategy(&strategies.Kamikaze{BetrayalStart: 160})
+	tm.AddStrategy(&strategies.Kamikaze{BetrayalStart: 120})
 	// -------------------------
 
 	tm.PlayTournament()
