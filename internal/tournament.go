@@ -23,8 +23,8 @@ func (tm *TournamentManager) AddStrategy(strategy Strategy) {
 }
 
 func (tm *TournamentManager) PlayRound(s1, s2 Strategy, h1, h2 History) (Action, Action, int, int) {
-	action1 := s1.Move(h1)
-	action2 := s2.Move(h2)
+	action1 := s1.Move(h2)
+	action2 := s2.Move(h1)
 	score1, score2 := tm.calculateScores(action1, action2)
 	return action1, action2, score1, score2
 }
