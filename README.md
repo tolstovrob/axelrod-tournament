@@ -8,6 +8,24 @@
 
 Проще говоря, проанализировать поведение стратегий в решении дилеммы заключенного с тенью будущего.
 
+## Создание своей стратегии
+
+Для создания новой стратегии реализуйте интерфейс Strategy:
+
+```go
+type MyStrategy interface {
+	Name() string
+	Move(opponentHistory History) Action
+	Reset()
+}
+```
+
+В вашем распоряжении лишь история ходов соперника.
+
+Если стратегия использует какое-то внутреннее состояние, то не забудьте очистить его в методе `Reset()`.
+
+Если же стратегии нужны параметры запуска, то сделайте их публичными полями структуры и инициализируйте при добавлении стратегии в менеджер.
+
 ## Пример использования
 
 ```go
@@ -18,7 +36,8 @@ config := internal.GameConfig{
 
 tm := internal.NewTournamentManager(config)
 tm.AddStrategy(strategies.TitForTat{})
-tm.AddStrategy(strategies.AlwaysDefect{})
+tm.AddStrategy(&strategies.Kamikaze{BetrayalStart: 120})
+tm.AddStrategy(strategies.MyStrategy{})
 
 tm.RunTournament()
 tm.PrintResults()
