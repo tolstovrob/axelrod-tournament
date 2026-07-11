@@ -44,6 +44,14 @@ tm.PrintResults()
 err := tm.ExportResultsToCSV("results.csv")
 ```
 
+Далее запустить можно командой `just`:
+
+```
+just
+# или just play
+# или go run cmd/play/main.go, если вы не just-enjoyer
+```
+
 ## Источник
 
 Основано на экспериментах Роберта Аксельрода по эволюции сотрудничества. https://cs.stanford.edu/people/eroberts/courses/soco/projects/1998-99/game-theory/axelrod.html
