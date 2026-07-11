@@ -1,8 +1,11 @@
 package internal
 
 import (
+	"encoding/csv"
 	"fmt"
+	"os"
 	"sort"
+	"strconv"
 )
 
 type TournamentManager struct {
@@ -71,10 +74,9 @@ func (tm *TournamentManager) PlayTournament() {
 	}
 }
 
-func (tm *TournamentManager) PrintResults() {
+func (tm *TournamentManager) getSortedStrategies() ([]Strategy, map[string]int) {
 	if len(tm.strategies) == 0 {
-		println("Нет первого среди равных... равных нулю, хах")
-		return
+		return nil, nil
 	}
 
 	names := make([]string, len(tm.strategies))
@@ -82,33 +84,80 @@ func (tm *TournamentManager) PrintResults() {
 		names[i] = s.Name()
 	}
 
-	scores := make(map[string]int)
+	totalScores := make(map[string]int)
 	for _, s1 := range names {
 		total := 0
 		for _, s2 := range names {
 			total += tm.results[s1][s2]
 		}
-		scores[s1] = total
+		totalScores[s1] = total
 	}
 
-	sort.Slice(tm.strategies, func(i, j int) bool {
-		return scores[tm.strategies[i].Name()] > scores[tm.strategies[j].Name()]
+	sorted := make([]Strategy, len(tm.strategies))
+	copy(sorted, tm.strategies)
+	sort.Slice(sorted, func(i, j int) bool {
+		return totalScores[sorted[i].Name()] > totalScores[sorted[j].Name()]
 	})
 
-	fmt.Printf("%-20s", "Стратегия")
-	for _, s := range tm.strategies {
-		fmt.Printf("%-12s", s.Name())
+	return sorted, totalScores
+}
+
+func (tm *TournamentManager) PrintResults() {
+	if len(tm.strategies) == 0 {
+		fmt.Println("Нет стратегий для отображения")
+		return
 	}
-	fmt.Printf("%-12s", "ИТОГО")
+
+	sorted, scores := tm.getSortedStrategies()
+
+	fmt.Printf("%-20s", "Стратегия")
+	for _, s := range sorted {
+		fmt.Printf("%-20s", s.Name())
+	}
+	fmt.Printf("%-20s", "ИТОГО")
 	fmt.Println()
 
-	for _, s1 := range tm.strategies {
+	for _, s1 := range sorted {
 		fmt.Printf("%-20s", s1.Name())
-		for _, s2 := range tm.strategies {
+		for _, s2 := range sorted {
 			fmt.Printf("%-12d", tm.results[s1.Name()][s2.Name()])
 		}
 		fmt.Printf("%-12d", scores[s1.Name()])
 		fmt.Println()
 	}
+}
 
+func (tm *TournamentManager) ExportResultsToCSV(filename string) error {
+	if len(tm.strategies) == 0 {
+		return fmt.Errorf("нет стратегий для экспорта")
+	}
+
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("не удалось создать файл: %w", err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	sorted, scores := tm.getSortedStrategies()
+
+	row := []string{"Стратегия"}
+	for _, s := range sorted {
+		row = append(row, s.Name())
+	}
+	row = append(row, "ИТОГО")
+	writer.Write(row)
+
+	for _, s1 := range sorted {
+		row := []string{s1.Name()}
+		for _, s2 := range sorted {
+			row = append(row, strconv.Itoa(tm.results[s1.Name()][s2.Name()]))
+		}
+		row = append(row, strconv.Itoa(scores[s1.Name()]))
+		writer.Write(row)
+	}
+
+	return nil
 }
