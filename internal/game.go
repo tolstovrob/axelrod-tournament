@@ -14,11 +14,4 @@ func (a Action) String() string {
 	return "defect"
 }
 
-type RoundResult struct {
-	P1Action Action
-	P2Action Action
-	P1Score  int
-	P2Score  int
-}
-
 type History []Action

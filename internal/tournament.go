@@ -25,37 +25,6 @@ func (tm *TournamentManager) AddStrategy(strategy Strategy) {
 	tm.strategies = append(tm.strategies, strategy)
 }
 
-func (tm *TournamentManager) PlayRound(s1, s2 Strategy, h1, h2 History) (Action, Action, int, int) {
-	action1 := s1.Move(h2)
-	action2 := s2.Move(h1)
-	score1, score2 := tm.calculateScores(action1, action2)
-	return action1, action2, score1, score2
-}
-
-func (tm *TournamentManager) calculateScores(action1, action2 Action) (int, int) {
-	key := [2]Action{action1, action2}
-	if val, ok := tm.config.PayoffMatrix[key]; ok {
-		return val[0], val[1]
-	}
-	return 0, 0
-}
-
-func (tm *TournamentManager) PlayMatch(s1, s2 Strategy) (int, int) {
-	var h1 History
-	var h2 History
-	score1, score2 := 0, 0
-
-	for round := 0; round < tm.config.Rounds; round++ {
-		action1, action2, s1score, s2score := tm.PlayRound(s1, s2, h1, h2)
-		h1 = append(h1, action1)
-		h2 = append(h2, action2)
-		score1 += s1score
-		score2 += s2score
-	}
-
-	return score1, score2
-}
-
 func (tm *TournamentManager) PlayTournament() {
 	for _, s := range tm.strategies {
 		tm.results[s.Name()] = make(map[string]int)
@@ -66,10 +35,10 @@ func (tm *TournamentManager) PlayTournament() {
 			s1 := tm.strategies[i]
 			s2 := tm.strategies[j]
 
-			score1, score2 := tm.PlayMatch(s1, s2)
+			res := PlayMatch(s1, s2, tm.config, 0)
 
-			tm.results[s1.Name()][s2.Name()] = score1
-			tm.results[s2.Name()][s1.Name()] = score2
+			tm.results[s1.Name()][s2.Name()] = res.Score1
+			tm.results[s2.Name()][s1.Name()] = res.Score2
 		}
 	}
 }
