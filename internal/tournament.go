@@ -11,13 +11,13 @@ import (
 type TournamentManager struct {
 	config     Config
 	strategies []Strategy
-	results    map[string]map[string]int // [P1][P2]Score
+	results    map[int]map[int]int // [P1][P2]Score
 }
 
 func NewTournamentManager(config Config) *TournamentManager {
 	return &TournamentManager{
 		config:  config,
-		results: make(map[string]map[string]int),
+		results: make(map[int]map[int]int),
 	}
 }
 
@@ -26,8 +26,8 @@ func (tm *TournamentManager) AddStrategy(strategy Strategy) {
 }
 
 func (tm *TournamentManager) PlayTournament() {
-	for _, s := range tm.strategies {
-		tm.results[s.Name()] = make(map[string]int)
+	for i := range tm.strategies {
+		tm.results[i] = make(map[int]int)
 	}
 
 	for i := 0; i < len(tm.strategies); i++ {
@@ -37,35 +37,28 @@ func (tm *TournamentManager) PlayTournament() {
 
 			res := PlayMatch(s1, s2, tm.config, 0)
 
-			tm.results[s1.Name()][s2.Name()] = res.Score1
-			tm.results[s2.Name()][s1.Name()] = res.Score2
+			tm.results[i][j] = res.Score1
+			tm.results[j][i] = res.Score2
 		}
 	}
 }
 
-func (tm *TournamentManager) getSortedStrategies() ([]Strategy, map[string]int) {
+func (tm *TournamentManager) getSortedStrategies() ([]int, map[int]int) {
 	if len(tm.strategies) == 0 {
 		return nil, nil
 	}
 
-	names := make([]string, len(tm.strategies))
-	for i, s := range tm.strategies {
-		names[i] = s.Name()
-	}
-
-	totalScores := make(map[string]int)
-	for _, s1 := range names {
-		total := 0
-		for _, s2 := range names {
-			total += tm.results[s1][s2]
+	sorted := make([]int, len(tm.strategies))
+	totalScores := make(map[int]int)
+	for i := range tm.strategies {
+		sorted[i] = i
+		for j := range tm.strategies {
+			totalScores[i] += tm.results[i][j]
 		}
-		totalScores[s1] = total
 	}
 
-	sorted := make([]Strategy, len(tm.strategies))
-	copy(sorted, tm.strategies)
 	sort.Slice(sorted, func(i, j int) bool {
-		return totalScores[sorted[i].Name()] > totalScores[sorted[j].Name()]
+		return totalScores[sorted[i]] > totalScores[sorted[j]]
 	})
 
 	return sorted, totalScores
@@ -80,18 +73,18 @@ func (tm *TournamentManager) PrintResults() {
 	sorted, scores := tm.getSortedStrategies()
 
 	fmt.Printf("%-20s", "Стратегия")
-	for _, s := range sorted {
-		fmt.Printf("%-20s", s.Name())
+	for _, i := range sorted {
+		fmt.Printf("%-20s", tm.strategies[i].Name())
 	}
 	fmt.Printf("%-20s", "ИТОГО")
 	fmt.Println()
 
-	for _, s1 := range sorted {
-		fmt.Printf("%-20s", s1.Name())
-		for _, s2 := range sorted {
-			fmt.Printf("%-12d", tm.results[s1.Name()][s2.Name()])
+	for _, i := range sorted {
+		fmt.Printf("%-20s", tm.strategies[i].Name())
+		for _, j := range sorted {
+			fmt.Printf("%-12d", tm.results[i][j])
 		}
-		fmt.Printf("%-12d", scores[s1.Name()])
+		fmt.Printf("%-12d", scores[i])
 		fmt.Println()
 	}
 }
@@ -113,18 +106,18 @@ func (tm *TournamentManager) ExportResultsToCSV(filename string) error {
 	sorted, scores := tm.getSortedStrategies()
 
 	row := []string{"Стратегия"}
-	for _, s := range sorted {
-		row = append(row, s.Name())
+	for _, i := range sorted {
+		row = append(row, tm.strategies[i].Name())
 	}
 	row = append(row, "ИТОГО")
 	writer.Write(row)
 
-	for _, s1 := range sorted {
-		row := []string{s1.Name()}
-		for _, s2 := range sorted {
-			row = append(row, strconv.Itoa(tm.results[s1.Name()][s2.Name()]))
+	for _, i := range sorted {
+		row := []string{tm.strategies[i].Name()}
+		for _, j := range sorted {
+			row = append(row, strconv.Itoa(tm.results[i][j]))
 		}
-		row = append(row, strconv.Itoa(scores[s1.Name()]))
+		row = append(row, strconv.Itoa(scores[i]))
 		writer.Write(row)
 	}
 
